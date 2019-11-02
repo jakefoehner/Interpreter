@@ -2,16 +2,30 @@
 #define Interpreter_h
 
 #include <stdio.h>
+#include <vector>
 using namespace std;
 
+enum data_type{INT, CHAR, SHORT, FLOAT};
+struct data_struct {
+	data_type dtype;
+	int iV;
+	char cV;
+	short sV;
+	float fV;
+};
 
 class Interpreter{
 private:
-	unsigned int * mem;
+	char * mem;
+	vector<data_struct> rstack;
+	vector<int> fpstack;
 	int pc;
 	int size;
+	int sp;
+	int fpsp;
+	bool stop;
 public:
-	Interpreter(unsigned int * input, int s);
+	Interpreter(char * input, int s);
 	~Interpreter();
 	void run();
 
