@@ -16,7 +16,7 @@ Interpreter::~Interpreter() {}
 
 void Interpreter::run(){
 	while(!stop){
-	//for(int i =0; i < 7; i++){
+	//for(int i =0; i < 14; i++){
 		//cout << static_cast<unsigned int>(mem[pc]) << endl;
 		switch (static_cast<unsigned int>(mem[pc])) {
 			case 132:
@@ -100,7 +100,7 @@ void Interpreter::run(){
 		    case 94:
 		        swp();
 		        break;
-		    case 110:
+		    case 100:
 		        add();
 		        break;
 		    case 104:
@@ -198,7 +198,7 @@ void Interpreter::cmpgt(){
 }
 
 void Interpreter::jmp(){
-	data_type type = rstack[sp].dtype;//cant figure out why this wont work
+	data_type type = rstack[sp].dtype;
 	if (type == INT) {
 		pc = rstack[sp].iV;
 	}
@@ -211,18 +211,30 @@ void Interpreter::jmp(){
 	if (type == FLOAT) {
 		pc = rstack[sp].fV;
 	}
+	rstack.pop_back();
 	sp--;
 }
 
 void Interpreter::jmpc(){
-	bool happened = false;
 	if (rstack[sp - 1].iV == 1) {
-		//pc = rstack[sp];  //IDK how to fix this.
-		happened = true;
+		if (rstack[sp].dtype == INT) {
+			pc = rstack[sp].iV;
+		}
+		if (rstack[sp].dtype == CHAR) {
+			pc = rstack[sp].cV;
+		}
+		if (rstack[sp].dtype == SHORT) {
+			pc = rstack[sp].sV;
+		}
+		if (rstack[sp].dtype == FLOAT) {
+			pc = rstack[sp].fV;
+		}
 	}
-	if (!happened) {
+	else{
 		pc++;
 	}
+	rstack.pop_back();
+	rstack.pop_back();
 	sp = sp - 2;
 }
 
@@ -423,6 +435,7 @@ void Interpreter::add(){
 	if (rstack[sp].dtype == FLOAT) {
 		rstack[sp - 1].fV = rstack[sp - 1].fV + rstack[sp].fV;
 	}
+	rstack.pop_back();
 	sp--;
 	pc++;
 }
@@ -439,6 +452,7 @@ void Interpreter::sub(){
 	if (rstack[sp].dtype == FLOAT) {
 		rstack[sp - 1].fV = rstack[sp - 1].fV - rstack[sp].fV;
 	}
+	rstack.pop_back();
 	sp--;
 	pc++;
 }
@@ -455,6 +469,7 @@ void Interpreter::mul(){
 	if (rstack[sp].dtype == FLOAT) {
 		rstack[sp - 1].fV = rstack[sp - 1].fV * rstack[sp].fV;
 	}
+	rstack.pop_back();
 	sp--;
 	pc++;
 }
@@ -471,6 +486,7 @@ void Interpreter::div(){
 	if (rstack[sp].dtype == FLOAT) {
 		rstack[sp - 1].fV = rstack[sp - 1].fV / rstack[sp].fV;
 	}
+	rstack.pop_back();
 	sp--;
 	pc++;
 }
@@ -515,6 +531,8 @@ void Interpreter::printf(){
 	pc++;
 }
 void Interpreter::halt(){
+	cout << endl;
+	cout << "Compile Values:" << endl;
 	cout << "PC:" << pc << endl;
 	cout << "SP:" << sp << endl;
 	cout << "RSTACK:" << endl;
@@ -527,7 +545,7 @@ void Interpreter::halt(){
 				cout << rstack[i].iV << endl;
 			}
 			if (rstack[i].dtype == CHAR) {
-				cout << rstack[i].cV << endl;
+				cout << static_cast<unsigned int>(rstack[i].cV) << endl;
 			}
 			if (rstack[i].dtype == SHORT) {
 				cout << rstack[i].sV << endl;
