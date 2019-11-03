@@ -6,8 +6,8 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
     ifstream inputF (argv[1], ios::binary);
-    char * input;
-    int i = 0, size;
+    unsigned char * input;
+    int size;
 
     //check if file opened correctly
     if (!inputF){
@@ -19,12 +19,8 @@ int main(int argc, char* argv[]) {
 	inputF.seekg(0, inputF.end);
 	size = inputF.tellg();
 	inputF.seekg(0, inputF.beg);
-	input = new char [size];
-	while (!inputF.eof()){
-    	inputF >> input[i];
-    	cout << static_cast<unsigned int>(input[i]) << endl;
-		i++;
-	}
+	input = new unsigned char [size];
+    inputF.read((char *) input, size);
 	inputF.close();
 
 	//build, and run interpreter
