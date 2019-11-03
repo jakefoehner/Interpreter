@@ -3,7 +3,7 @@
 using namespace std;
 
 
-Interpreter::Interpreter(char* input, int s) {
+Interpreter::Interpreter(unsigned char* input, int s) {
 	mem = input;
 	pc = 0;
 	size = s;
@@ -15,8 +15,9 @@ Interpreter::Interpreter(char* input, int s) {
 Interpreter::~Interpreter() {}
 
 void Interpreter::run(){
-	for(int i =0; i < 21; i++){
-		cout << static_cast<unsigned int>(mem[pc]) << endl;
+	while(!stop){
+	//for(int i =0; i < 7; i++){
+		//cout << static_cast<unsigned int>(mem[pc]) << endl;
 		switch (static_cast<unsigned int>(mem[pc])) {
 			case 132:
 				cmpe();
@@ -130,7 +131,7 @@ void Interpreter::run(){
 		        cout << "Error, Interpreter code does not have a function." << endl;
 		}
 	}
-	halt();
+	//halt();
 }
 
 void Interpreter::cmpe(){
@@ -246,24 +247,49 @@ void Interpreter::call(){
 }
 
 void Interpreter::ret(){
-
+	sp = fpstack[fpsp--];
+	if(rstack[sp].dtype == INT){
+		pc = rstack[sp--].iV;
+	}
+	if(rstack[sp].dtype == CHAR){
+		pc = int(rstack[sp--].cV);
+	}
+    if(rstack[sp].dtype == SHORT){
+        pc = rstack[sp--].sV;
+    }
+    if(rstack[sp].dtype == FLOAT){
+        pc = rstack[sp--].fV;
+    }
+    rstack.pop_back();
+    fpstack.pop_back();
 }
 
 void Interpreter::pushc(){
+	unsigned char byte = {mem[pc+1]};
+	char bToC;
+	memcpy(&bToC, &byte, sizeof(byte));
 	data_struct c;
 	c.dtype = CHAR;
-	c.cV = mem[pc+1];
+	c.cV = bToC;
 	rstack.push_back(c);
 	sp++;
 	pc += 2;
 }
 void Interpreter::pushs(){
-
+	unsigned char bytes[2] = {mem[pc+1],mem[pc+2]};
+	short bToS;
+	memcpy(&bToS, bytes, sizeof(bytes));
+	data_struct s;
+	s.dtype = SHORT;
+	s.sV = bToS;
+	rstack.push_back(s);
+	sp++;
+	pc += 3;
 }
 void Interpreter::pushi(){
 	char bytes[4] = {mem[pc+1],mem[pc+2],mem[pc+3],mem[pc+4]};
 	int bToI;
-	memcpy(&bToI, bytes, 4);
+	memcpy(&bToI, bytes, sizeof(bytes));
 	data_struct i;
 	i.dtype = INT;
 	i.iV = bToI;
@@ -272,7 +298,15 @@ void Interpreter::pushi(){
 	pc += 5;
 }
 void Interpreter::pushf(){
-
+	char bytes[4] = {mem[pc+1],mem[pc+2],mem[pc+3],mem[pc+4]};
+	float bToF;
+	memcpy(&bToF, bytes, sizeof(bytes));
+	data_struct f;
+	f.dtype = FLOAT;
+	f.fV = bToF;
+	rstack.push_back(f);
+	sp++;
+	pc += 5;
 }
 void Interpreter::pushvc(){
 	rstack[sp].cV = rstack[fpstack[fpsp]+rstack[sp].cV+1].cV;
@@ -291,7 +325,18 @@ void Interpreter::pushvf(){
 	pc++;
 }
 void Interpreter::popm(){
-
+	if (rstack[sp].dtype == INT) {
+		sp -= rstack[sp].iV+1;
+	}
+	else if (rstack[sp].dtype == CHAR) {
+		sp -= rstack[sp].iV+1;
+	}
+	else if (rstack[sp].dtype == SHORT) {
+		sp -= rstack[sp].iV+1;
+	}
+	else if (rstack[sp].dtype == FLOAT) {
+		sp -= rstack[sp].iV+1;
+	}
 }
 void Interpreter::popv(){
 	rstack[fpstack[fpsp] + rstack[sp].iV + 1].iV = rstack[sp-1].iV;
@@ -301,13 +346,32 @@ void Interpreter::popv(){
 	pc++;
 }
 void Interpreter::popa(){
-
+	int total = rstack[sp].iV;
+	for(int i = 0; i < total; i++){
+		rstack[fpstack[fpsp] + i + 1].iV = rstack[sp- rstack[sp].iV + i].iV;
+		sp -= 2;
+		rstack.pop_back();
+		rstack.pop_back();
+		pc++;
+	}
 }
 void Interpreter::peekc(){
-
+	pc++;
+	rstack[fpstack[fpsp] + rstack[sp - 1].cV + 1].cV = rstack[fpstack[fpsp] + rstack[sp].cV + 1].cV;
+	rstack.pop_back();
+	sp--;
+	//might need to pop back twice so sp-- one more time.
+	//rstack.pop_back();
+	//sp -= 2;
 }
 void Interpreter::peeks(){
-
+	pc++;
+	rstack[fpstack[fpsp] + rstack[sp - 1].sV + 1].sV = rstack[fpstack[fpsp] + rstack[sp].sV + 1].sV;
+	rstack.pop_back();
+	sp--;
+	//might need to pop back twice so sp-- one more time.
+	//rstack.pop_back();
+	//sp -= 2;
 }
 void Interpreter::peeki(){
 	pc++;
@@ -317,19 +381,27 @@ void Interpreter::peeki(){
 	sp -= 2;
 }
 void Interpreter::peekf(){
-
+	pc++;
+	rstack[fpstack[fpsp] + rstack[sp - 1].fV + 1].fV = rstack[fpstack[fpsp] + rstack[sp].fV + 1].fV;
+	rstack.pop_back();
+	rstack.pop_back();
+	sp -= 2;
 }
 void Interpreter::pokec(){
-
+	rstack[fpstack[fpsp]+rstack[sp].cV+1].cV = rstack[fpstack[fpsp]+rstack[sp-1].cV+1].cV;
+	pc++;
 }
 void Interpreter::pokes(){
-
+	rstack[fpstack[fpsp]+rstack[sp].sV+1].sV = rstack[fpstack[fpsp]+rstack[sp-1].sV+1].sV;
+	pc++;
 }
 void Interpreter::pokei(){
-
+	rstack[fpstack[fpsp]+rstack[sp].iV+1].iV = rstack[fpstack[fpsp]+rstack[sp-1].iV+1].iV;
+	pc++;
 }
 void Interpreter::pokef(){
-
+	rstack[fpstack[fpsp]+rstack[sp].fV+1].fV = rstack[fpstack[fpsp]+rstack[sp-1].fV+1].fV;
+	pc++;
 }
 void Interpreter::swp(){
 	data_struct temp = rstack[sp - 1];
@@ -404,7 +476,8 @@ void Interpreter::div(){
 }
 void Interpreter::printc(){
 	if (rstack[sp].dtype == CHAR) {
-		cout << rstack[sp--].cV << endl;
+		cout << static_cast<unsigned int>(rstack[sp--].cV) << endl;
+		rstack.pop_back();
 	}
 	else {
 		cout << "printc has invalid input" << endl;
@@ -414,6 +487,7 @@ void Interpreter::printc(){
 void Interpreter::prints(){
 	if (rstack[sp].dtype == SHORT) {
 		cout << rstack[sp--].sV << endl;
+		rstack.pop_back();
 	}
 	else {
 		cout << "prints has invalid input" << endl;
@@ -423,6 +497,7 @@ void Interpreter::prints(){
 void Interpreter::printi(){
 	if (rstack[sp].dtype == INT) {
 		cout << rstack[sp--].iV << endl;
+		rstack.pop_back();
 	}
 	else {
 		cout << "printi has invalid input" << endl;
@@ -432,6 +507,7 @@ void Interpreter::printi(){
 void Interpreter::printf(){
 	if (rstack[sp].dtype == FLOAT) {
 		cout << rstack[sp--].fV << endl;
+		rstack.pop_back();
 	}
 	else {
 		cout << "printf has invalid input" << endl;
