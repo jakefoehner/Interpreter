@@ -23,9 +23,17 @@ int main(int argc, char* argv[]) {
     inputF.read((char *) input, size);
 	inputF.close();
 
+	for(int i = 0; i < size; i++){
+		cout << static_cast<unsigned int>(input[i]) << endl;
+	}
+	cout << endl;
+
 	//build, and run interpreter
-	Interpreter interp = Interpreter(input, size);
-	interp.run();
+	Interpreter * interp = new Interpreter(input, size);
+	interp->run();
+
+	delete[] input;
+	delete interp;
 
     return 0;
 }
