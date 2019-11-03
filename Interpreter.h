@@ -16,7 +16,7 @@ struct data_struct {
 
 class Interpreter{
 private:
-	char * mem;
+	unsigned char * mem;
 	vector<data_struct> rstack;
 	vector<int> fpstack;
 	int pc;
@@ -24,9 +24,11 @@ private:
 	int sp;
 	int fpsp;
 	bool stop;
+
 public:
-	Interpreter(char * input, int s);
+	Interpreter(unsigned char * input, int s);
 	~Interpreter();
+
 	void run();
 
 	void cmpe();
