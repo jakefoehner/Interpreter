@@ -15,6 +15,7 @@ struct Data{
 	short sV;
 	int iV;
 	float fV;
+	double all;
 };
 
 class Interpreter{
