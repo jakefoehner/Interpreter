@@ -1,12 +1,8 @@
 #include "Interpreter.h"
-#include <iostream>
-using namespace std;
 
-
-Interpreter::Interpreter(unsigned char* input, int s) {
+Interpreter::Interpreter(unsigned char* input) {
 	mem = input;
 	pc = 0;
-	size = s;
 	sp = -1;
 	fpsp = -1;
 	stop = false;
@@ -16,8 +12,6 @@ Interpreter::~Interpreter() {}
 
 void Interpreter::run(){
 	while(!stop){
-	//for(int i =0; i < 14; i++){
-		//cout << static_cast<unsigned int>(mem[pc]) << endl;
 		switch (static_cast<unsigned int>(mem[pc])) {
 			case 132:
 				cmpe();
@@ -129,9 +123,9 @@ void Interpreter::run(){
 		        break;
 		    default:
 		        cout << "Error, Interpreter code does not have a function." << endl;
+		        halt();
 		}
 	}
-	//halt();
 }
 
 void Interpreter::cmpe(){
@@ -139,19 +133,18 @@ void Interpreter::cmpe(){
 	if (rstack[sp].dtype == INT){
 		result = rstack[sp].iV == rstack[sp - 1].iV;
 	}
-	if (rstack[sp].dtype == CHAR){
+	else if (rstack[sp].dtype == CHAR){
 		result = rstack[sp].cV == rstack[sp - 1].cV;
 	}
-	if (rstack[sp].dtype == SHORT) {
+	else if (rstack[sp].dtype == SHORT) {
 		result = rstack[sp].sV == rstack[sp - 1].sV;
 	}
-	if (rstack[sp].dtype == FLOAT) {
+	else if (rstack[sp].dtype == FLOAT) {
 		result = rstack[sp].fV == rstack[sp - 1].fV;
 	}
-	rstack[sp - 1].iV = result;
-	rstack[sp - 1].dtype = INT;
+	rstack[--sp].iV = result;
+	rstack[sp].dtype = INT;
 	rstack.pop_back();
-	sp--;
 	pc++;
 }
 
@@ -160,19 +153,18 @@ void Interpreter::cmplt(){
 	if (rstack[sp].dtype == INT) {
 		result = rstack[sp].iV > rstack[sp - 1].iV;
 	}
-	if (rstack[sp].dtype == CHAR) {
+	else if (rstack[sp].dtype == CHAR) {
 		result = rstack[sp].cV > rstack[sp - 1].cV;
 	}
-	if (rstack[sp].dtype == SHORT) {
+	else if (rstack[sp].dtype == SHORT) {
 		result = rstack[sp].sV > rstack[sp - 1].sV;
 	}
-	if (rstack[sp].dtype == FLOAT) {
+	else if (rstack[sp].dtype == FLOAT) {
 		result = rstack[sp].fV > rstack[sp - 1].fV;
 	}
-	rstack[sp - 1].iV = result;
-	rstack[sp - 1].dtype = INT;
+	rstack[--sp].iV = result;
+	rstack[sp].dtype = INT;
 	rstack.pop_back();
-	sp--;
 	pc++;
 }
 
@@ -181,34 +173,32 @@ void Interpreter::cmpgt(){
 	if (rstack[sp].dtype == INT) {
 		result = rstack[sp].iV < rstack[sp - 1].iV;
 	}
-	if (rstack[sp].dtype == CHAR) {
+	else if (rstack[sp].dtype == CHAR) {
 		result = rstack[sp].cV < rstack[sp - 1].cV;
 	}
-	if (rstack[sp].dtype == SHORT) {
+	else if (rstack[sp].dtype == SHORT) {
 		result = rstack[sp].sV < rstack[sp - 1].sV;
 	}
-	if (rstack[sp].dtype == FLOAT) {
+	else if (rstack[sp].dtype == FLOAT) {
 		result = rstack[sp].fV < rstack[sp - 1].fV;
 	}
-	rstack[sp - 1].iV = result;
-	rstack[sp - 1].dtype = INT;
+	rstack[--sp].iV = result;
+	rstack[sp].dtype = INT;
 	rstack.pop_back();
-	sp--;
 	pc++;
 }
 
 void Interpreter::jmp(){
-	data_type type = rstack[sp].dtype;
-	if (type == INT) {
+	if (rstack[sp].dtype == INT) {
 		pc = rstack[sp].iV;
 	}
-	if (type == CHAR) {
+	else if (rstack[sp].dtype == CHAR) {
 		pc = rstack[sp].cV;
 	}
-	if (type == SHORT) {
+	else if (rstack[sp].dtype == SHORT) {
 		pc = rstack[sp].sV;
 	}
-	if (type == FLOAT) {
+	else if (rstack[sp].dtype == FLOAT) {
 		pc = rstack[sp].fV;
 	}
 	rstack.pop_back();
@@ -220,13 +210,13 @@ void Interpreter::jmpc(){
 		if (rstack[sp].dtype == INT) {
 			pc = rstack[sp].iV;
 		}
-		if (rstack[sp].dtype == CHAR) {
+		else if (rstack[sp].dtype == CHAR) {
 			pc = rstack[sp].cV;
 		}
-		if (rstack[sp].dtype == SHORT) {
+		else if (rstack[sp].dtype == SHORT) {
 			pc = rstack[sp].sV;
 		}
-		if (rstack[sp].dtype == FLOAT) {
+		else if (rstack[sp].dtype == FLOAT) {
 			pc = rstack[sp].fV;
 		}
 	}
@@ -235,43 +225,35 @@ void Interpreter::jmpc(){
 	}
 	rstack.pop_back();
 	rstack.pop_back();
-	sp = sp - 2;
+	sp -= 2;
 }
 
 void Interpreter::call(){
     if(rstack[sp].dtype == INT){
     	fpstack.push_back(sp - rstack[sp].iV - 1);
     }
-    if(rstack[sp].dtype == CHAR){
+    else if(rstack[sp].dtype == CHAR){
         fpstack.push_back(sp - rstack[sp].cV - 1);
     }
-    if(rstack[sp].dtype == SHORT){
+    else if(rstack[sp].dtype == SHORT){
         fpstack.push_back(sp - rstack[sp].sV - 1);
 	}
-    if(rstack[sp].dtype == FLOAT){
+    else if(rstack[sp].dtype == FLOAT){
         fpstack.push_back(sp - rstack[sp].fV - 1);
     }
+    pc = rstack[--sp].iV;
+    rstack.pop_back();
+    rstack.pop_back();
     sp--;
     fpsp++;
-    rstack.pop_back();
-    pc = rstack[sp--].iV;
-    rstack.pop_back();
 }
 
 void Interpreter::ret(){
-	sp = fpstack[fpsp--];
-	if(rstack[sp].dtype == INT){
-		pc = rstack[sp--].iV;
-	}
-	if(rstack[sp].dtype == CHAR){
-		pc = int(rstack[sp--].cV);
-	}
-    if(rstack[sp].dtype == SHORT){
-        pc = rstack[sp--].sV;
+    for(int i = 0; i < sp - fpstack[fpsp]; i++){
+    	rstack.pop_back();
     }
-    if(rstack[sp].dtype == FLOAT){
-        pc = rstack[sp--].fV;
-    }
+    sp = fpstack[fpsp--];
+    pc = rstack[sp--].iV;
     rstack.pop_back();
     fpstack.pop_back();
 }
@@ -280,143 +262,166 @@ void Interpreter::pushc(){
 	unsigned char byte = {mem[pc+1]};
 	char bToC;
 	memcpy(&bToC, &byte, sizeof(byte));
-	data_struct c;
+	Data c;
 	c.dtype = CHAR;
 	c.cV = bToC;
 	rstack.push_back(c);
 	sp++;
 	pc += 2;
 }
+
 void Interpreter::pushs(){
-	unsigned char bytes[2] = {mem[pc+1],mem[pc+2]};
+	char bytes[2] = {mem[pc+1],mem[pc+2]};
 	short bToS;
 	memcpy(&bToS, bytes, sizeof(bytes));
-	data_struct s;
+	Data s;
 	s.dtype = SHORT;
 	s.sV = bToS;
 	rstack.push_back(s);
 	sp++;
 	pc += 3;
 }
+
 void Interpreter::pushi(){
 	char bytes[4] = {mem[pc+1],mem[pc+2],mem[pc+3],mem[pc+4]};
 	int bToI;
 	memcpy(&bToI, bytes, sizeof(bytes));
-	data_struct i;
+	Data i;
 	i.dtype = INT;
 	i.iV = bToI;
 	rstack.push_back(i);
 	sp++;
 	pc += 5;
 }
+
 void Interpreter::pushf(){
 	char bytes[4] = {mem[pc+1],mem[pc+2],mem[pc+3],mem[pc+4]};
 	float bToF;
 	memcpy(&bToF, bytes, sizeof(bytes));
-	data_struct f;
+	Data f;
 	f.dtype = FLOAT;
 	f.fV = bToF;
 	rstack.push_back(f);
 	sp++;
 	pc += 5;
 }
+
 void Interpreter::pushvc(){
-	rstack[sp].cV = rstack[fpstack[fpsp]+rstack[sp].cV+1].cV;
+	Data d;
+	d.dtype = CHAR;
+	d.cV = rstack[fpstack[fpsp]+rstack[sp].iV+1].cV;
+	rstack.pop_back();
+	rstack.push_back(d);
 	pc++;
 }
+
 void Interpreter::pushvs(){
-	rstack[sp].sV = rstack[fpstack[fpsp]+rstack[sp].sV+1].sV;
+	Data d;
+	d.dtype = SHORT;
+	d.sV = rstack[fpstack[fpsp]+rstack[sp].iV+1].sV;
+	rstack.pop_back();
+	rstack.push_back(d);
 	pc++;
 }
+
 void Interpreter::pushvi(){
-	rstack[sp].iV = rstack[fpstack[fpsp]+rstack[sp].iV+1].iV;
+	Data d;
+	d.dtype = INT;
+	d.iV = rstack[fpstack[fpsp]+rstack[sp].iV+1].iV;
+	rstack.pop_back();
+	rstack.push_back(d);
 	pc++;
 }
+
 void Interpreter::pushvf(){
-	rstack[sp].fV = rstack[fpstack[fpsp]+rstack[sp].fV+1].fV;
+	Data d;
+	d.dtype = FLOAT;
+	d.fV = rstack[fpstack[fpsp]+rstack[sp].iV+1].fV;
+	rstack.pop_back();
+	rstack.push_back(d);
 	pc++;
 }
+
 void Interpreter::popm(){
-	if (rstack[sp].dtype == INT) {
-		sp -= rstack[sp].iV+1;
+	int del = rstack[sp].iV;
+	for(int i = 0; i < del; i++){
+		rstack.pop_back();
 	}
-	else if (rstack[sp].dtype == CHAR) {
-		sp -= rstack[sp].iV+1;
-	}
-	else if (rstack[sp].dtype == SHORT) {
-		sp -= rstack[sp].iV+1;
-	}
-	else if (rstack[sp].dtype == FLOAT) {
-		sp -= rstack[sp].iV+1;
-	}
+	pc++;
+	sp -= del+1;
 }
+
 void Interpreter::popv(){
-	rstack[fpstack[fpsp] + rstack[sp].iV + 1].iV = rstack[sp-1].iV;
+	rstack[fpstack[fpsp] + rstack[sp].iV + 1] = rstack[sp-1];
+	rstack.pop_back();
+	rstack.pop_back();
+	pc++;
 	sp -= 2;
-	rstack.pop_back();
-	rstack.pop_back();
-	pc++;
 }
+
 void Interpreter::popa(){
-	int total = rstack[sp].iV;
-	for(int i = 0; i < total; i++){
-		rstack[fpstack[fpsp] + i + 1].iV = rstack[sp- rstack[sp].iV + i].iV;
-		sp -= 2;
-		rstack.pop_back();
-		rstack.pop_back();
-		pc++;
+	for(int i = 0; i < rstack[sp].iV; i++){
+		rstack[fpstack[fpsp] + i + 1] = rstack[sp- rstack[sp].iV + i];
 	}
-}
-void Interpreter::peekc(){
+	for(int i = 0; i < sp - (fpstack[fpsp]+rstack[sp].iV); i++){
+		rstack.pop_back();
+	}
+	sp = fpstack[fpsp]+rstack[sp].iV;
 	pc++;
+}
+
+void Interpreter::peekc(){
 	rstack[fpstack[fpsp] + rstack[sp - 1].cV + 1].cV = rstack[fpstack[fpsp] + rstack[sp].cV + 1].cV;
 	rstack.pop_back();
 	sp--;
-	//might need to pop back twice so sp-- one more time.
-	//rstack.pop_back();
-	//sp -= 2;
-}
-void Interpreter::peeks(){
 	pc++;
+}
+
+void Interpreter::peeks(){
 	rstack[fpstack[fpsp] + rstack[sp - 1].sV + 1].sV = rstack[fpstack[fpsp] + rstack[sp].sV + 1].sV;
 	rstack.pop_back();
 	sp--;
-	//might need to pop back twice so sp-- one more time.
-	//rstack.pop_back();
-	//sp -= 2;
-}
-void Interpreter::peeki(){
 	pc++;
+}
+
+void Interpreter::peeki(){
 	rstack[fpstack[fpsp] + rstack[sp-1].iV+1].iV = rstack[fpstack[fpsp]+rstack[sp].iV+1].iV;
 	rstack.pop_back();
 	rstack.pop_back();
 	sp -= 2;
-}
-void Interpreter::peekf(){
 	pc++;
+}
+
+void Interpreter::peekf(){
 	rstack[fpstack[fpsp] + rstack[sp - 1].fV + 1].fV = rstack[fpstack[fpsp] + rstack[sp].fV + 1].fV;
 	rstack.pop_back();
 	rstack.pop_back();
 	sp -= 2;
+	pc++;
 }
+
 void Interpreter::pokec(){
 	rstack[fpstack[fpsp]+rstack[sp].cV+1].cV = rstack[fpstack[fpsp]+rstack[sp-1].cV+1].cV;
 	pc++;
 }
+
 void Interpreter::pokes(){
 	rstack[fpstack[fpsp]+rstack[sp].sV+1].sV = rstack[fpstack[fpsp]+rstack[sp-1].sV+1].sV;
 	pc++;
 }
+
 void Interpreter::pokei(){
 	rstack[fpstack[fpsp]+rstack[sp].iV+1].iV = rstack[fpstack[fpsp]+rstack[sp-1].iV+1].iV;
 	pc++;
 }
+
 void Interpreter::pokef(){
 	rstack[fpstack[fpsp]+rstack[sp].fV+1].fV = rstack[fpstack[fpsp]+rstack[sp-1].fV+1].fV;
 	pc++;
 }
+
 void Interpreter::swp(){
-	data_struct temp = rstack[sp - 1];
+	Data temp = rstack[sp - 1];
 	rstack[sp - 1] = rstack[sp];
 	rstack[sp] = temp;
 	pc++;
@@ -439,6 +444,7 @@ void Interpreter::add(){
 	sp--;
 	pc++;
 }
+
 void Interpreter::sub(){
 	if (rstack[sp].dtype == INT) {
 		rstack[sp - 1].iV = rstack[sp - 1].iV - rstack[sp].iV;
@@ -456,6 +462,7 @@ void Interpreter::sub(){
 	sp--;
 	pc++;
 }
+
 void Interpreter::mul(){
 	if (rstack[sp].dtype == INT) {
 		rstack[sp - 1].iV = rstack[sp - 1].iV * rstack[sp].iV;
@@ -473,6 +480,7 @@ void Interpreter::mul(){
 	sp--;
 	pc++;
 }
+
 void Interpreter::div(){
 	if (rstack[sp].dtype == INT) {
 		rstack[sp - 1].iV = rstack[sp - 1].iV / rstack[sp].iV;
@@ -490,6 +498,7 @@ void Interpreter::div(){
 	sp--;
 	pc++;
 }
+
 void Interpreter::printc(){
 	if (rstack[sp].dtype == CHAR) {
 		cout << static_cast<unsigned int>(rstack[sp--].cV) << endl;
@@ -500,6 +509,7 @@ void Interpreter::printc(){
 	}
 	pc++;
 }
+
 void Interpreter::prints(){
 	if (rstack[sp].dtype == SHORT) {
 		cout << rstack[sp--].sV << endl;
@@ -510,6 +520,7 @@ void Interpreter::prints(){
 	}
 	pc++;
 }
+
 void Interpreter::printi(){
 	if (rstack[sp].dtype == INT) {
 		cout << rstack[sp--].iV << endl;
@@ -520,6 +531,7 @@ void Interpreter::printi(){
 	}
 	pc++;
 }
+
 void Interpreter::printf(){
 	if (rstack[sp].dtype == FLOAT) {
 		cout << rstack[sp--].fV << endl;
@@ -530,6 +542,7 @@ void Interpreter::printf(){
 	}
 	pc++;
 }
+
 void Interpreter::halt(){
 	cout << endl;
 	cout << "Compile Values:" << endl;
