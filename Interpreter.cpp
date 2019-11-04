@@ -143,6 +143,7 @@ void Interpreter::cmpe(){
 		result = rstack[sp].fV == rstack[sp - 1].fV;
 	}
 	rstack[--sp].iV = result;
+	rstack[sp].all = result;
 	rstack[sp].dtype = INT;
 	rstack.pop_back();
 	pc++;
@@ -163,6 +164,7 @@ void Interpreter::cmplt(){
 		result = rstack[sp].fV > rstack[sp - 1].fV;
 	}
 	rstack[--sp].iV = result;
+	rstack[sp].all = result;
 	rstack[sp].dtype = INT;
 	rstack.pop_back();
 	pc++;
@@ -183,6 +185,7 @@ void Interpreter::cmpgt(){
 		result = rstack[sp].fV < rstack[sp - 1].fV;
 	}
 	rstack[--sp].iV = result;
+	rstack[sp].all = result;
 	rstack[sp].dtype = INT;
 	rstack.pop_back();
 	pc++;
@@ -206,7 +209,7 @@ void Interpreter::jmp(){
 }
 
 void Interpreter::jmpc(){
-	if (rstack[sp - 1].iV == 1) {
+	if (rstack[sp - 1].all == 1) {
 		if (rstack[sp].dtype == INT) {
 			pc = rstack[sp].iV;
 		}
@@ -241,7 +244,7 @@ void Interpreter::call(){
     else if(rstack[sp].dtype == FLOAT){
         fpstack.push_back(sp - rstack[sp].fV - 1);
     }
-    pc = rstack[--sp].iV;
+    pc = static_cast<int>(rstack[--sp].all);
     rstack.pop_back();
     rstack.pop_back();
     sp--;
@@ -253,7 +256,7 @@ void Interpreter::ret(){
     	rstack.pop_back();
     }
     sp = fpstack[fpsp--];
-    pc = rstack[sp--].iV;
+    pc = static_cast<int>(rstack[sp--].all);
     rstack.pop_back();
     fpstack.pop_back();
 }
@@ -265,6 +268,7 @@ void Interpreter::pushc(){
 	Data c;
 	c.dtype = CHAR;
 	c.cV = bToC;
+	c.all = bToC;
 	rstack.push_back(c);
 	sp++;
 	pc += 2;
@@ -277,6 +281,7 @@ void Interpreter::pushs(){
 	Data s;
 	s.dtype = SHORT;
 	s.sV = bToS;
+	s.all = bToS;
 	rstack.push_back(s);
 	sp++;
 	pc += 3;
@@ -289,6 +294,7 @@ void Interpreter::pushi(){
 	Data i;
 	i.dtype = INT;
 	i.iV = bToI;
+	i.all = bToI;
 	rstack.push_back(i);
 	sp++;
 	pc += 5;
@@ -301,6 +307,7 @@ void Interpreter::pushf(){
 	Data f;
 	f.dtype = FLOAT;
 	f.fV = bToF;
+	f.all = bToF;
 	rstack.push_back(f);
 	sp++;
 	pc += 5;
@@ -309,7 +316,8 @@ void Interpreter::pushf(){
 void Interpreter::pushvc(){
 	Data d;
 	d.dtype = CHAR;
-	d.cV = rstack[fpstack[fpsp]+rstack[sp].iV+1].cV;
+	d.cV = rstack[fpstack[fpsp]+static_cast<int>(rstack[sp].all)+1].cV;
+	d.all = d.cV;
 	rstack.pop_back();
 	rstack.push_back(d);
 	pc++;
@@ -318,7 +326,8 @@ void Interpreter::pushvc(){
 void Interpreter::pushvs(){
 	Data d;
 	d.dtype = SHORT;
-	d.sV = rstack[fpstack[fpsp]+rstack[sp].iV+1].sV;
+	d.sV = rstack[fpstack[fpsp]+static_cast<int>(rstack[sp].all)+1].sV;
+	d.all = d.sV;
 	rstack.pop_back();
 	rstack.push_back(d);
 	pc++;
@@ -327,7 +336,8 @@ void Interpreter::pushvs(){
 void Interpreter::pushvi(){
 	Data d;
 	d.dtype = INT;
-	d.iV = rstack[fpstack[fpsp]+rstack[sp].iV+1].iV;
+	d.iV = rstack[fpstack[fpsp]+static_cast<int>(rstack[sp].all)+1].iV;
+	d.all = d.iV;
 	rstack.pop_back();
 	rstack.push_back(d);
 	pc++;
@@ -336,14 +346,15 @@ void Interpreter::pushvi(){
 void Interpreter::pushvf(){
 	Data d;
 	d.dtype = FLOAT;
-	d.fV = rstack[fpstack[fpsp]+rstack[sp].iV+1].fV;
+	d.fV = rstack[fpstack[fpsp]+static_cast<int>(rstack[sp].all)+1].fV;
+	d.all = d.fV;
 	rstack.pop_back();
 	rstack.push_back(d);
 	pc++;
 }
 
 void Interpreter::popm(){
-	int del = rstack[sp].iV;
+	int del = static_cast<int>(rstack[sp].all);
 	for(int i = 0; i < del; i++){
 		rstack.pop_back();
 	}
@@ -352,7 +363,7 @@ void Interpreter::popm(){
 }
 
 void Interpreter::popv(){
-	rstack[fpstack[fpsp] + rstack[sp].iV + 1] = rstack[sp-1];
+	rstack[fpstack[fpsp] + static_cast<int>(rstack[sp].all) + 1] = rstack[sp-1];
 	rstack.pop_back();
 	rstack.pop_back();
 	pc++;
@@ -360,32 +371,34 @@ void Interpreter::popv(){
 }
 
 void Interpreter::popa(){
-	for(int i = 0; i < rstack[sp].iV; i++){
-		rstack[fpstack[fpsp] + i + 1] = rstack[sp- rstack[sp].iV + i];
+	for(int i = 0; i < static_cast<int>(rstack[sp].all); i++){
+		rstack[fpstack[fpsp] + i + 1] = rstack[sp- static_cast<int>(rstack[sp].all) + i];
 	}
-	for(int i = 0; i < sp - (fpstack[fpsp]+rstack[sp].iV); i++){
+	for(int i = 0; i < sp - (fpstack[fpsp]+static_cast<int>(rstack[sp].all)); i++){
 		rstack.pop_back();
 	}
-	sp = fpstack[fpsp]+rstack[sp].iV;
+	sp = fpstack[fpsp]+static_cast<int>(rstack[sp].all);
 	pc++;
 }
 
 void Interpreter::peekc(){
-	rstack[fpstack[fpsp] + rstack[sp - 1].cV + 1].cV = rstack[fpstack[fpsp] + rstack[sp].cV + 1].cV;
+	rstack[fpstack[fpsp]+static_cast<int>(rstack[sp-1].all)+1] = rstack[fpstack[fpsp]+static_cast<int>(rstack[sp].all)+1];
 	rstack.pop_back();
-	sp--;
+	rstack.pop_back();
+	sp -= 2;
 	pc++;
 }
 
 void Interpreter::peeks(){
-	rstack[fpstack[fpsp] + rstack[sp - 1].sV + 1].sV = rstack[fpstack[fpsp] + rstack[sp].sV + 1].sV;
+	rstack[fpstack[fpsp]+static_cast<int>(rstack[sp-1].all)+1] = rstack[fpstack[fpsp]+static_cast<int>(rstack[sp].all)+1];
 	rstack.pop_back();
-	sp--;
+	rstack.pop_back();
+	sp -= 2;
 	pc++;
 }
 
 void Interpreter::peeki(){
-	rstack[fpstack[fpsp] + rstack[sp-1].iV+1].iV = rstack[fpstack[fpsp]+rstack[sp].iV+1].iV;
+	rstack[fpstack[fpsp]+static_cast<int>(rstack[sp-1].all)+1] = rstack[fpstack[fpsp]+static_cast<int>(rstack[sp].all)+1];
 	rstack.pop_back();
 	rstack.pop_back();
 	sp -= 2;
@@ -393,7 +406,7 @@ void Interpreter::peeki(){
 }
 
 void Interpreter::peekf(){
-	rstack[fpstack[fpsp] + rstack[sp - 1].fV + 1].fV = rstack[fpstack[fpsp] + rstack[sp].fV + 1].fV;
+	rstack[fpstack[fpsp]+static_cast<int>(rstack[sp-1].all)+1] = rstack[fpstack[fpsp]+static_cast<int>(rstack[sp].all)+1];
 	rstack.pop_back();
 	rstack.pop_back();
 	sp -= 2;
@@ -401,22 +414,34 @@ void Interpreter::peekf(){
 }
 
 void Interpreter::pokec(){
-	rstack[fpstack[fpsp]+rstack[sp].cV+1].cV = rstack[fpstack[fpsp]+rstack[sp-1].cV+1].cV;
+	rstack[fpstack[fpsp]+static_cast<int>(rstack[sp].all)+1] = rstack[fpstack[fpsp]+static_cast<int>(rstack[sp-1].all)+1];
+	rstack.pop_back();
+	rstack.pop_back();
+	sp -= 2;
 	pc++;
 }
 
 void Interpreter::pokes(){
-	rstack[fpstack[fpsp]+rstack[sp].sV+1].sV = rstack[fpstack[fpsp]+rstack[sp-1].sV+1].sV;
+	rstack[fpstack[fpsp]+static_cast<int>(rstack[sp].all)+1] = rstack[fpstack[fpsp]+static_cast<int>(rstack[sp-1].all)+1];
+	rstack.pop_back();
+	rstack.pop_back();
+	sp -= 2;
 	pc++;
 }
 
 void Interpreter::pokei(){
-	rstack[fpstack[fpsp]+rstack[sp].iV+1].iV = rstack[fpstack[fpsp]+rstack[sp-1].iV+1].iV;
+	rstack[fpstack[fpsp]+static_cast<int>(rstack[sp].all)+1] = rstack[fpstack[fpsp]+static_cast<int>(rstack[sp-1].all)+1];
+	rstack.pop_back();
+	rstack.pop_back();
+	sp -= 2;
 	pc++;
 }
 
 void Interpreter::pokef(){
-	rstack[fpstack[fpsp]+rstack[sp].fV+1].fV = rstack[fpstack[fpsp]+rstack[sp-1].fV+1].fV;
+	rstack[fpstack[fpsp]+static_cast<int>(rstack[sp].all)+1] = rstack[fpstack[fpsp]+static_cast<int>(rstack[sp-1].all)+1];
+	rstack.pop_back();
+	rstack.pop_back();
+	sp -= 2;
 	pc++;
 }
 
@@ -430,15 +455,19 @@ void Interpreter::swp(){
 void Interpreter::add(){
 	if (rstack[sp].dtype == INT) {
 		rstack[sp - 1].iV = rstack[sp - 1].iV + rstack[sp].iV;
+		rstack[sp-1].all = rstack[sp].iV;
 	}
 	if (rstack[sp].dtype == CHAR) {
 		rstack[sp - 1].cV = rstack[sp - 1].cV + rstack[sp].cV;
+		rstack[sp-1].all = rstack[sp].cV;
 	}
 	if (rstack[sp].dtype == SHORT) {
 		rstack[sp - 1].sV = rstack[sp - 1].sV + rstack[sp].sV;
+		rstack[sp-1].all = rstack[sp].sV;
 	}
 	if (rstack[sp].dtype == FLOAT) {
 		rstack[sp - 1].fV = rstack[sp - 1].fV + rstack[sp].fV;
+		rstack[sp-1].all = rstack[sp].fV;
 	}
 	rstack.pop_back();
 	sp--;
@@ -448,15 +477,19 @@ void Interpreter::add(){
 void Interpreter::sub(){
 	if (rstack[sp].dtype == INT) {
 		rstack[sp - 1].iV = rstack[sp - 1].iV - rstack[sp].iV;
+		rstack[sp-1].all = rstack[sp].iV;
 	}
 	if (rstack[sp].dtype == CHAR) {
 		rstack[sp - 1].cV = rstack[sp - 1].cV - rstack[sp].cV;
+		rstack[sp-1].all = rstack[sp].cV;
 	}
 	if (rstack[sp].dtype == SHORT) {
 		rstack[sp - 1].sV = rstack[sp - 1].sV - rstack[sp].sV;
+		rstack[sp-1].all = rstack[sp].sV;
 	}
 	if (rstack[sp].dtype == FLOAT) {
 		rstack[sp - 1].fV = rstack[sp - 1].fV - rstack[sp].fV;
+		rstack[sp-1].all = rstack[sp].fV;
 	}
 	rstack.pop_back();
 	sp--;
@@ -466,15 +499,19 @@ void Interpreter::sub(){
 void Interpreter::mul(){
 	if (rstack[sp].dtype == INT) {
 		rstack[sp - 1].iV = rstack[sp - 1].iV * rstack[sp].iV;
+		rstack[sp-1].all = rstack[sp].iV;
 	}
 	if (rstack[sp].dtype == CHAR) {
 		rstack[sp - 1].cV = rstack[sp - 1].cV * rstack[sp].cV;
+		rstack[sp-1].all = rstack[sp].cV;
 	}
 	if (rstack[sp].dtype == SHORT) {
 		rstack[sp - 1].sV = rstack[sp - 1].sV * rstack[sp].sV;
+		rstack[sp-1].all = rstack[sp].sV;
 	}
 	if (rstack[sp].dtype == FLOAT) {
 		rstack[sp - 1].fV = rstack[sp - 1].fV * rstack[sp].fV;
+		rstack[sp-1].all = rstack[sp].fV;
 	}
 	rstack.pop_back();
 	sp--;
@@ -484,15 +521,19 @@ void Interpreter::mul(){
 void Interpreter::div(){
 	if (rstack[sp].dtype == INT) {
 		rstack[sp - 1].iV = rstack[sp - 1].iV / rstack[sp].iV;
+		rstack[sp-1].all = rstack[sp].iV;
 	}
 	if (rstack[sp].dtype == CHAR) {
 		rstack[sp - 1].cV = rstack[sp - 1].cV / rstack[sp].cV;
+		rstack[sp-1].all = rstack[sp].cV;
 	}
 	if (rstack[sp].dtype == SHORT) {
 		rstack[sp - 1].sV = rstack[sp - 1].sV / rstack[sp].sV;
+		rstack[sp-1].all = rstack[sp].sV;
 	}
 	if (rstack[sp].dtype == FLOAT) {
 		rstack[sp - 1].fV = rstack[sp - 1].fV / rstack[sp].fV;
+		rstack[sp-1].all = rstack[sp].fV;
 	}
 	rstack.pop_back();
 	sp--;
@@ -558,7 +599,7 @@ void Interpreter::halt(){
 				cout << rstack[i].iV << endl;
 			}
 			if (rstack[i].dtype == CHAR) {
-				cout << static_cast<unsigned int>(rstack[i].cV) << endl;
+				cout << static_cast<int>(rstack[i].cV) << endl;
 			}
 			if (rstack[i].dtype == SHORT) {
 				cout << rstack[i].sV << endl;
