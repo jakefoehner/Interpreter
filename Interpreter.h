@@ -1,36 +1,36 @@
 #ifndef Interpreter_h
 #define Interpreter_h
 
-#include <stdio.h>
 #include <vector>
+#include <iostream>
+#include <fstream>
+#include <string>
 using namespace std;
 
-enum data_type{INT, CHAR, SHORT, FLOAT};
-struct data_struct {
-	data_type dtype;
-	int iV;
+enum type{CHAR, SHORT, INT, FLOAT};
+
+struct Data{
+	type dtype;
 	char cV;
 	short sV;
+	int iV;
 	float fV;
 };
 
 class Interpreter{
 private:
 	unsigned char * mem;
-	vector<data_struct> rstack;
+	vector<Data> rstack;
 	vector<int> fpstack;
 	int pc;
-	int size;
 	int sp;
 	int fpsp;
 	bool stop;
-
 public:
-	Interpreter(unsigned char * input, int s);
+	Interpreter(unsigned char * input);
 	~Interpreter();
 
 	void run();
-
 	void cmpe();
 	void cmplt();
     void cmpgt();
