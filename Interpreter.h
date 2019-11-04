@@ -11,10 +11,6 @@ enum type{CHAR, SHORT, INT, FLOAT};
 
 struct Data{
 	type dtype;
-	char cV;
-	short sV;
-	int iV;
-	float fV;
 	double all;
 };
 
